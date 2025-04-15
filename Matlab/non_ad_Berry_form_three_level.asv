@@ -1,0 +1,188 @@
+%% Three-Level System: Non-Hermitian Hamiltonian & Non-Adiabatic Formalism
+clear; clc;
+
+%% Parameters
+% Coupling for 1-2 transition (via the oscillatory field)
+d12   = -33.6 * 2*pi;               % dipole moment for 1-2 (arbitrary units)
+E0    = 40;                       % field amplitude for stark
+omega = 2*pi*11.44e3;             % angular frequency for the sine field
+
+% Coupling for 1-3 transition (Gaussian pulse)
+d13    = -2.15e4 * 2*pi;          % dipole moment for 1-3 (as in previous code)
+E_L2   = 8.514e2 * 1;           % electric field amplitude for L2
+E0_nr  = 12;                     % additional amplitude for non-resonant part
+t0L2   = 52.6e-6;                % center of the Gaussian pulse (s)
+t0nr   = 70.1e-6;
+sigma  = 0.52e-6;                % pulse width (s)
+
+% Detunings and decay
+Delta1 = 2*pi*2e3;               % detuning for state 2 (1-2 transition)
+Delta2 = 2*pi*1e6*3;             % L2 detuning
+Gamma  = 2.7e6 * 2*pi;           % decay rate for state 3
+
+% Time span (in seconds)
+t_start = -51.1e-6;             % start time
+t_end   = 160e-6;               % end time
+tspan   = [t_start, t_end];
+
+%% Define time-dependent couplings
+% 1-2 coupling: active only when -43.7 µs < t < 43.7 µs plus a non-resonant term
+E_stark = @(t) ( (t > -43.7e-6 & t < 43.7e-6) .* ( d12 .* E0 .* sin(omega*(t + 43.7e-6)) ) );
+Enr = @(t) d12 * E0_nr * sech(616 * (t - t0nr) / 0.76e-2);
+Omega = @(t) E_stark(t) + Enr(t);
+% 1-3 coupling: Omega'_{13}(t) = 0.5*d13*E_L2*exp(-((t-t0L2)^2)/(2*sigma^2))
+Omega13prime = @(t) 0.5 * d13 .* E_L2 .* exp(-((t-t0L2).^2)/(2*sigma^2));
+
+%% Define the 3x3 non-Hermitian Hamiltonian function H(t)
+H = @(t) [ 0,               Omega(t),         Omega13prime(t);
+           Omega(t),        Delta1,           0;
+           Omega13prime(t), 0,   Delta2 - 1i*(Gamma/2) ];
+
+%% Solve the state-vector dynamics:
+% Solve: dψ/dt = -i H(t) ψ, with initial state ψ(t_start) = [1; 0; 0]
+psi0 = [1; 0; 0];  % initial state
+stateODE = @(t, psi) -1i * H(t) * psi;
+opts = odeset('RelTol',1e-13,'AbsTol',1e-12);
+[t_sol, psi_sol] = ode45(stateODE, tspan, psi0, opts);
+
+% Extract populations (|ψ|^2) from full simulation
+pop1 = abs(psi_sol(:,1)).^2;
+pop2 = abs(psi_sol(:,2)).^2;
+pop3 = abs(psi_sol(:,3)).^2;
+
+%% Compute the Non-Adiabatic Phases along the Eigenstate Branch
+% We discretize time for phase integration.
+N_phase = 10000;
+t_phase = linspace(tspan(1), tspan(2), N_phase);
+
+% Preallocate arrays for eigenvalue, right eigenvector, and left eigenvector.
+lambda_branch = zeros(1, length(t_phase));   % eigenvalue for branch
+v_branch = zeros(3, length(t_phase));          % right eigenvector |ϕ_n(t)>
+w_branch = zeros(3, length(t_phase));          % left eigenvector |χ_n(t)>
+
+% --- At initial time, choose branch with maximum weight on state 1 ---
+H0 = H(t_phase(1));
+[V0, D0] = eig(H0);
+eigs0 = diag(D0);
+[~, idx0] = max(abs(V0(1,:)));
+lambda_branch(1) = eigs0(idx0);
+v_branch(:,1) = V0(:,idx0);
+W0 = inv(V0);  % left eigenvectors: rows of inv(V0)
+w_branch(:,1) = (W0(idx0, :)).';  % column vector
+
+prev_lambda = lambda_branch(1);
+
+% --- Loop over time: track branch (here you can choose branch-tracking method) ---
+for k = 2:length(t_phase)
+    Hk = H(t_phase(k));
+    [Vk, Dk] = eig(Hk);
+    eigs_k = diag(Dk);
+    % Here we choose the eigenvalue closest to the previous one (you could choose a fixed branch instead)
+    [~, idx] = min(abs(eigs_k - prev_lambda));
+    lambda_branch(k) = eigs_k(idx);
+    v_branch(:, k) = Vk(:, idx);
+    
+    % Left eigenvectors from inv(Vk)
+    Wk = inv(Vk);
+    w_branch(:, k) = (Wk(idx, :)).';
+    
+    % Normalize biorthogonal pair so that <w|v> = 1
+    norm_factor = w_branch(:, k)' * v_branch(:, k);
+    v_branch(:, k) = v_branch(:, k) / sqrt(norm_factor);
+    w_branch(:, k) = w_branch(:, k) / sqrt(norm_factor);
+    
+    prev_lambda = lambda_branch(k);
+end
+
+% --- Dynamic Phase: integrate eigenvalue over time ---
+dynamic_phase = cumtrapz(t_phase, lambda_branch);
+
+% --- Berry Phase: compute the non-Hermitian connection A(t) ---
+% A(t) = <χ(t)| (d/dt)|ϕ(t)>
+A_connection = zeros(1, length(t_phase));
+dt = t_phase(2) - t_phase(1);
+for k = 1:length(t_phase)-1
+    dv = (v_branch(:, k+1) - v_branch(:, k)) / dt;
+    A_connection(k) = w_branch(:, k)' * dv;
+end
+A_connection(end) = A_connection(end-1);  % assign last point
+
+% Integrate A(t) over time to obtain the Berry phase (non-adiabatic geometric phase)
+berry_phase = 1i * cumtrapz(t_phase, A_connection);
+
+% --- Total Phase Factor: combine dynamic and Berry phases ---
+total_phase_factor = exp(1i * berry_phase) .* exp(-1i * dynamic_phase);
+
+%% Compute the Predicted State using the Non-Adiabatic Formalism
+% The instantaneous right eigenstate is |ϕ_n(t)> = v_branch(:,k)
+% The predicted state is:
+%   ψ_pred(t) = exp{-i γ_D(t)} exp{i γ_B(t)} |ϕ_n(t)>
+psi_pred = zeros(3, length(t_phase));
+for k = 1:length(t_phase)
+    psi_pred(:, k) = total_phase_factor(k) * v_branch(:, k);
+end
+
+% Compute predicted populations from the non-adiabatic formalism
+pop_pred1 = abs(psi_pred(1,:)).^2;
+pop_pred2 = abs(psi_pred(2,:)).^2;
+pop_pred3 = abs(psi_pred(3,:)).^2;
+
+%% Plot the Full Simulation and Predicted Evolution
+figure;
+plot(t_sol*1e6, pop1, 'b', 'LineWidth', 2); hold on;
+plot(t_sol*1e6, pop2, 'r', 'LineWidth', 2);
+plot(t_sol*1e6, pop3, 'g', 'LineWidth', 2);
+% Plot predicted population of state 1 from the non-adiabatic formalism
+plot(t_phase*1e6, pop_pred1, 'm--', 'LineWidth', 2);
+plot(t_phase*1e6, pop_pred2, 'm--', 'LineWidth', 2);
+plot(t_phase*1e6, pop_pred3, 'm--', 'LineWidth', 2);
+% plot(t_phase*1e6, Omega(t_phase), 'k','LineWidth', 3)
+
+xlabel('Time (\mus)');
+ylabel('Population');
+legend('\psi_1 (full)', '\psi_2 (full)', '\psi_3 (full)', 'Predicted \psi_1');
+title('Population Dynamics with Non-Adiabatic Phase Correction');
+grid on;
+
+%% Plot the Berry Connection A(t)
+figure;
+subplot(2,1,1);
+plot(t_phase*1e6, real(A_connection), 'LineWidth',2);
+xlabel('Time (\mus)');
+ylabel('Re[A(t)]');
+title('Real Part of the Berry Connection');
+grid on;
+subplot(2,1,2);
+plot(t_phase*1e6, imag(A_connection), 'LineWidth',2);
+xlabel('Time (\mus)');
+ylabel('Im[A(t)]');
+title('Imaginary Part of the Berry Connection');
+grid on;
+
+%% Plot Eigenvalues vs Time (Real and Imaginary Parts)
+num_eigs = 3;
+eigenvalues_all = zeros(num_eigs, length(t_phase));
+for k = 1:length(t_phase)
+    eigenvalues_all(:, k) = eig(H(t_phase(k)));
+end
+
+figure;
+subplot(2,1,1);
+plot(t_phase*1e6, real(eigenvalues_all(1,:)), 'r', 'LineWidth',2); hold on;
+plot(t_phase*1e6, real(eigenvalues_all(2,:)), 'g', 'LineWidth',2);
+plot(t_phase*1e6, real(eigenvalues_all(3,:)), 'b', 'LineWidth',2);
+xlabel('Time (\mus)');
+ylabel('Real Part of Eigenvalue');
+legend('eig1','eig2','eig3','Location','Best');
+title('Real Parts of Eigenvalues vs. Time');
+grid on;
+
+subplot(2,1,2);
+plot(t_phase*1e6, imag(eigenvalues_all(1,:)), 'r', 'LineWidth',2); hold on;
+plot(t_phase*1e6, imag(eigenvalues_all(2,:)), 'g', 'LineWidth',2);
+plot(t_phase*1e6, imag(eigenvalues_all(3,:)), 'b', 'LineWidth',2);
+xlabel('Time (\mus)');
+ylabel('Imaginary Part of Eigenvalue');
+legend('eig1','eig2','eig3','Location','Best');
+title('Imaginary Parts of Eigenvalues vs. Time');
+grid on;

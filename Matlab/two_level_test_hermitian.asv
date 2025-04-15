@@ -1,0 +1,88 @@
+%% Two-Level Hermitian System: Non-Adiabatic Formalism 
+% clear; clc;
+
+%% Parameters
+d12   = -33.6*2*pi;       % dipole moment (arb. units)
+E0    = 40;              % field amplitude
+omega = 2*pi*11.44e3;     % angular frequency (rad/s)
+Delta = 2*pi*2e3;        % detuning for level 2
+
+t_start = -51.1e-6;      % start time (s)
+t_end   = 160e-6;        % end time (s)
+tspan   = [t_start, t_end];
+
+%% Define time-dependent coupling: active only when -43.7 µs < t < 43.7 µs.
+E_stark = @(t) ((t > -43.7e-6 & t < 43.7e-6) .* ( d12 * E0 * sin(omega*(t + 43.7e-6)) ));
+H = @(t) [ 0,         E_stark(t);
+           E_stark(t),  Delta ];
+
+%% Full Evolution via ODE (Schrödinger Equation)
+psi0 = [1; 0];  % initial state: all in state 1
+stateODE = @(t, psi) -1i * H(t) * psi;
+opts = odeset('RelTol',1e-13,'AbsTol',1e-12);
+[t_sol, psi_sol] = ode45(stateODE, tspan, psi0, opts);
+pop_full = abs(psi_sol).^2;  % populations from full simulation
+
+%% Non-Adiabatic Formalism: Eigen-Decomposition and Phase Calculation
+N_phase = 10000;
+t_phase = linspace(tspan(1), tspan(2), N_phase);
+
+% Preallocate for the tracked branch (we assume 1 branch suffices)
+lambda_branch = zeros(1, N_phase);
+v_branch = zeros(2, N_phase);
+
+% At t = t_phase(1), choose eigenstate with max weight on state 1.
+H0 = H(t_phase(1));
+[V0, D0] = eig(H0);
+eigs0 = diag(D0);
+[~, idx0] = max(abs(V0(1,:)));
+lambda_branch(1) = eigs0(idx0);
+v_branch(:,1) = V0(:,idx0);
+% Force first component positive:
+if v_branch(1,1) < 0, v_branch(:,1) = -v_branch(:,1); end
+prev_lambda = lambda_branch(1);
+
+% Loop over time and track the eigenstate branch.
+for k = 2:N_phase
+    Hk = H(t_phase(k));
+    [Vk, Dk] = eig(Hk);
+    eigs_k = diag(Dk);
+    [~, idx] = min(abs(eigs_k - prev_lambda));
+    lambda_branch(k) = eigs_k(idx);
+    v_branch(:,k) = Vk(:,idx);
+    if v_branch(1,k) < 0, v_branch(:,k) = -v_branch(:,k); end
+    prev_lambda = lambda_branch(k);
+end
+
+%% Compute Phase Integrals
+dynamic_phase = cumtrapz(t_phase, lambda_branch);
+dt = t_phase(2) - t_phase(1);
+A_connection = zeros(1, N_phase);
+for k = 1:N_phase-1
+    dv = (v_branch(:,k+1) - v_branch(:,k)) / dt;
+    A_connection(k) = (v_branch(:,k))' * dv;
+end
+A_connection(N_phase) = A_connection(N_phase-1);
+berry_phase = 1i * cumtrapz(t_phase, A_connection);
+
+total_phase = exp(1i*berry_phase) .* exp(-1i*dynamic_phase);
+
+%% Reconstruct Predicted State via Non-Adiabatic Formalism
+psi_pred = zeros(2, N_phase);
+for k = 1:N_phase
+    psi_pred(:,k) = total_phase(k) * v_branch(:,k);
+end
+pop_pred = abs(psi_pred).^2;
+
+%% Plot Results: Full Simulation vs. Non-Adiabatic Prediction
+figure;
+plot(t_sol*1e6, pop_full(:,1), 'b', 'LineWidth', 2); hold on;
+plot(t_phase*1e6, pop_pred(1,:), 'm--', 'LineWidth', 2);
+xlabel('Time (\mus)'); ylabel('Population in State 1');
+legend('Full Simulation','Predicted');
+title('State 1 Population'); grid on;
+plot(t_sol*1e6, pop_full(:,2), 'r', 'LineWidth', 2); hold on;
+plot(t_phase*1e6, pop_pred(2,:), 'k--', 'LineWidth', 2);
+xlabel('Time (\mus)'); ylabel('Population in State 2');
+legend('Full Simulation','Predicted');
+title('State 2 Population'); grid on;
