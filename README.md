@@ -4,7 +4,7 @@ This repository contains simulation code and logs related to studying systematic
 
 ## Motivation
 
-Experiments using BaF-138 molecules showed unexpected linear behavior between systematic error signals and experimental imperfections. This simulation aims to reproduce and understand that effect in a simplified three-level quantum system.
+Experiments using <sup>138</sup>BaF molecules showed unexpected linear behavior between systematic error signals and experimental imperfections. This simulation aims to reproduce and understand that effect in a simplified three-level quantum system.
 
 ## Model Overview
 
