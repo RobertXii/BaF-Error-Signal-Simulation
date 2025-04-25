@@ -55,7 +55,7 @@ for i = 1:nDet
         % sim.Delta = 2*pi*1e3 * 2; %2*pi*1e3 * 2
         sim.E0_stark = 40; %40
         sim.E0_nr = E0_nr_values(j);
-        sim.E0_L2 = 8.514e2 * 0.11;          % 8.514e2*1 is theoretical amplitude for a 8mW laser
+        sim.E0_L2 = 1204.1 * 0.11;          % 8.514e2*1 is theoretical amplitude for a 8mW laser
         sim.detuning_L2 = 2*pi*1e6 * detuning_L2_multipliers(i);
         
         % -----------------------------------------------------------------
@@ -64,7 +64,7 @@ for i = 1:nDet
         % -----------------------------------------------------------------
         % sim = sim.runVary_Detuning('OBE');        % Use OBE formalism
         sim = sim.runVary_Detuning('Schrodinger');   % Use Schrödinger evolution
-        sim = sim.calculateAnalyticAsymmetry();
+        % sim = sim.calculateAnalyticAsymmetry();
         fitResults = sim.fitAsymmetry(true);
         
         % Store the fitted parameters:
@@ -101,9 +101,9 @@ disp(a1_table);
 sim.plotElectricField();
 
 %% Output analytic result
-% sim.analyticSol(3);
+sim.analyticSol(3);
 
 %% plot the asymmetry vs. detuning curve:
-sim.plotAsymmetry();
+% sim.plotAsymmetry();
 
 

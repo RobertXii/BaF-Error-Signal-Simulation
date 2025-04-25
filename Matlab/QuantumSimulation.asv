@@ -34,7 +34,7 @@ classdef QuantumSimulation
         % Field Parameters
         E0_stark = 10;               % Stark field amplitude [V/m]
         E0_nr    = 0;                % Non-reversing field amplitude [V/m]
-        E0_L2    = 1204.1 * 0.11;    % 8.514e2 * 0.11;   % Depletion laser (L2) amplitude 8.514e2 [V/m]
+        E0_L2    = 1204.1 * 0.11; % 8.514e2 * 0.11;   % Depletion laser (L2) amplitude 8.514e2 [V/m]
         omega_stark = 2*pi*11.44e3;  % Stark field frequency [rad/s]
         detuning_L2 = 2*pi*1e6*2;    % L2 laser detuning [rad/s]
         v = 616;                     % Molecular beam velocity 616[m/s]
@@ -48,7 +48,7 @@ classdef QuantumSimulation
         T_f2 = 8.9e-6;               % Free evolution time before enter stark field [s]
         t_center_L2 = 52.6e-6;       % Center of the laser pulse 52.6e-6[s]
         sigma_L2 = 0.373e-6;          % Variance of the laser pulse 0.52e-6 [s]
-        tspan = linspace(-51.1e-6, 250e-6, 10000);  % Simulation time span (-51.1e-6, 400e-6, 10000)[s]
+        tspan = linspace(-51.1e-6, 200e-6, 10000);  % Simulation time span (-51.1e-6, 400e-6, 10000)[s]
         
         % Detuning Scan Parameters
         detuning_range = linspace(-4000, 4000, 100) * 2 * pi; % Detuning values for |b> [rad/s]
@@ -529,7 +529,7 @@ classdef QuantumSimulation
             %   reversed (-E_stark + E_nr) electric fields over the simulation time.
             
             % Use the same time span as in the simulation
-            time = obj.tspan-50e-6;
+            time = obj.tspan;
             
             % Define the Stark and non-reversing fields (using the same expressions)
             T = 43.7e-6;
@@ -558,23 +558,19 @@ classdef QuantumSimulation
             
             % Plot both fields vs. time (convert time to microseconds for clarity)
             figure('Position', [100, 100, 600, 300]);
-            hold on;
-            plot(time*1e6, E_stark, 'Color', [0.6 0.6 0.6], 'LineStyle', ':', 'LineWidth', 1.5);
-            plot(time*1e6, E_nr_original, 'Color', [0.6 0.6 0.6], 'LineStyle', ':', 'LineWidth', 1.5);
             plot(time*1e6, E_forward, 'k-', 'LineWidth', 1.5);
-
+            hold on;
             plot(time*1e6, Rabi, 'r-', 'LineWidth', 1);
-            xlabel('Time (\mu s)');
+            xlabel('Time (\mus)');
             ylabel('Electric Field Strength (arb. unit)');
-            % set(gca, 'XTick', [], 'YTick', []);
+            set(gca, 'XTick', [], 'YTick', []);
             % title('Electric Field vs Time');
-            % legend({'$\mathcal{E}_{nr} + \mathcal{E}_{\mathrm{Stark}}$', ...
-            %     '$\mathcal{E}_{L2}$'}, ...
-            %     'Interpreter', 'latex', 'FontSize', 16);
-            % legend boxoff
+            legend({'$\mathcal{E}_{nr} + \mathcal{E}_{\mathrm{Stark}}$', ...
+                '$\mathcal{E}_{L2}$'}, ...
+                'Interpreter', 'latex', 'FontSize', 16);
+            legend boxoff
             set(gca, 'FontName', 'Times New Roman', 'FontSize', 15);
             grid off;
-            box on;
         end
 
         %% Analytic Prediction
