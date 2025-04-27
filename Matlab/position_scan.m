@@ -1,7 +1,7 @@
 %% Define Scan Parameters
 % Modify these arrays to change the scan range for the L2 detuning multiplier
 % and the non-reversing field amplitude (E0_nr).
-nr_pos = 470:30:800;                   % L2 detuning multipliers [MHz]
+nr_pos = 470:30:600;                   % L2 detuning multipliers [MHz]
 L2_pos = 52:10:52;                   % Non-reversing field amplitudes [V/m]
 
 % Determine the number of scan points for each parameter
@@ -35,8 +35,8 @@ for i = 1:nnr
         % -----------------------------------------------------------------
         % sim.Delta = 2*pi*1e3*2;
         sim.E0_stark = 40;
-        sim.E0_nr = -12;
-        sim.E0_L2 = 8.514e2 * 0.11;    % *1 is theoretical amplitude for a 8mW laser
+        sim.E0_nr = 12;
+        sim.E0_L2 = 1204.1 * 0.09;    % *1 is theoretical amplitude for a 8mW laser
         sim.detuning_L2 = 2*pi*1e6 * -3;
         sim.t0 = nr_pos(i)*1e-6;
         sim.t_center_L2 = L2_pos(j)*1e-6;

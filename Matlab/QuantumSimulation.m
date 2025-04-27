@@ -34,7 +34,7 @@ classdef QuantumSimulation
         % Field Parameters
         E0_stark = 10;               % Stark field amplitude [V/m]
         E0_nr    = 0;                % Non-reversing field amplitude [V/m]
-        E0_L2    = 1204.1 * 0.11;    % 8.514e2 * 0.11;   % Depletion laser (L2) amplitude 8.514e2 [V/m]
+        E0_L2    = 1204.1 * 0.1;    % 8.514e2 * 0.11;   % Depletion laser (L2) amplitude 8.514e2 [V/m]
         omega_stark = 2*pi*11.44e3;  % Stark field frequency [rad/s]
         detuning_L2 = 2*pi*1e6*2;    % L2 laser detuning [rad/s]
         v = 616;                     % Molecular beam velocity 616[m/s]

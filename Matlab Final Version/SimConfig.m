@@ -1,0 +1,51 @@
+%% SimConfig.m
+classdef SimConfig
+    % Centralized simulation parameters
+    properties
+        W              % Weak matrix element [rad/s]
+        d12            % Dipole matrix element|a>↔|b| [rad/(s·V/m)]
+        d13            % Dipole matrix element|a>↔|c| [rad/(s·V/m)]
+        gamma_c        % Decay rate of |c> [rad/s]
+        E0_stark       % Stark field amplitude [V/m]
+        E0_nr          % Non-reversing field amplitude [V/m]
+        E0_L2          % L2 laser amplitude [V/m]
+        omega_stark    % Stark frequency [rad/s]
+        v              % Beam velocity [m/s]
+        sigma_u        % NR field width [m]
+        t_nr             % NR field center time [s]
+        T_f1           % Free evolution before Stark [s]
+        T_f2           % Free evolution after Stark [s]
+        T_e            % Stark interaction duration [s]
+        t_L2           % L2 pulse center time [s]
+        sigma_L2       % L2 pulse width [s]
+        tspan          % Time span [s]
+        detuning_range % Detuning scan values [rad/s]
+        detuning_L2    % L2 laser detuning [rad/s]
+        fieldMethod    % Which total field profile to use
+    end
+    methods(Static)
+        function cfg = default()
+            cfg = SimConfig;
+            cfg.W            = 0;
+            cfg.d12          = -33.6 * 2*pi;
+            cfg.d13          = -2.15e4 * 2*pi;
+            cfg.gamma_c      = 2.7e6 * 2*pi;
+            cfg.E0_stark     = 40;
+            cfg.E0_nr        = 0;
+            cfg.E0_L2        = 1204.1;
+            cfg.omega_stark  = 2*pi*11.44e3;
+            cfg.v            = 616;
+            cfg.sigma_u      = 7.6e-3;
+            cfg.t_nr         = 70.1e-6;
+            cfg.t_L2         = 52.6e-6;
+            cfg.T_f1         = 7.4e-6;
+            cfg.T_f2         = 8.9e-6;
+            cfg.T_e          = 87.4e-6;
+            cfg.sigma_L2     = 0.373e-6;
+            cfg.tspan        = linspace(-51.1e-6,200e-6,10000);
+            cfg.detuning_range = linspace(-4000,4000,100) * 2*pi;
+            cfg.detuning_L2  = 2*pi*1e6 * 2;
+            cfg.fieldMethod  = 'default';
+        end
+    end
+end

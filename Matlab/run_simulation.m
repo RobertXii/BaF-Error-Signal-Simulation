@@ -19,9 +19,9 @@
 %% Define Scan Parameters
 % Modify these arrays to change the scan range for the L2 detuning multiplier
 % and the non-reversing field amplitude (E0_nr).
-detuning_L2_multipliers = 3:1:3;          % L2 detuning multpliers [MHz]
-% E0_nr_values = -12:3:12;                  % Non-reversing field amplitudes [V/m]
-E0_nr_values = 12;                   % Non-reversing field amplitudes [V/m]
+detuning_L2_multipliers = -3:1:3;          % L2 detuning multpliers [MHz]
+E0_nr_values = -12:24:12;                  % Non-reversing field amplitudes [V/m]
+% E0_nr_values = 12;                   % Non-reversing field amplitudes [V/m]
 
 % Determine the number of scan points for each parameter
 nDet = numel(detuning_L2_multipliers);
@@ -55,7 +55,7 @@ for i = 1:nDet
         % sim.Delta = 2*pi*1e3 * 2; %2*pi*1e3 * 2
         sim.E0_stark = 40; %40
         sim.E0_nr = E0_nr_values(j);
-        sim.E0_L2 = 1204.1 * 0.11;          % 8.514e2*1 is theoretical amplitude for a 8mW laser
+        sim.E0_L2 = 1204.1 * 0.09;          % 8.514e2*1 is theoretical amplitude for a 8mW laser
         sim.detuning_L2 = 2*pi*1e6 * detuning_L2_multipliers(i);
         
         % -----------------------------------------------------------------
@@ -104,6 +104,6 @@ sim.plotElectricField();
 sim.analyticSol(3);
 
 %% plot the asymmetry vs. detuning curve:
-% sim.plotAsymmetry();
+sim.plotAsymmetry();
 
 

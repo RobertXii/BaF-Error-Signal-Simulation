@@ -1,0 +1,127 @@
+%% +threeLevel/PlotUtils.m
+classdef PlotUtils
+    methods(Static)
+        function plotAsymmetry(cfg, det, asym, params, plotFlag)
+            if nargin<5, plotFlag = false; end
+
+            W_rad = params(1) * 2*pi;  % convert from Hz to rad/s
+            a0    = params(2);
+            a1    = params(3);
+
+            fitFunc = @(p,Delta) ...
+              (2*p(1)./Delta) .* ...
+              ((cfg.omega_stark^2 - Delta.^2) ...
+               ./ (cfg.d12*cfg.E0_stark*cfg.omega_stark)) .* ...
+              (sin((Delta/2)*(cfg.T_e + cfg.T_f1 + cfg.T_f2)) ...
+               ./ sin((Delta/2)*cfg.T_e)) .* ...
+              cos((Delta/2)*(cfg.T_f1 - cfg.T_f2)) ...
+              + p(2) + p(3).*Delta;
+            fit_curve = fitFunc([W_rad, a0, a1], det);
+
+            % Mask out the region |Δ| ≤ 1000 Hz to avoid divergence
+            det_Hz = det/(2*pi);
+            mask = abs(det_Hz) <= 1000;
+            fit_curve(mask) = NaN;
+            
+            det_kHz = det/(1000*2*pi);
+
+            figure; hold on;
+            plot(det_kHz, asym, 'ko', 'MarkerFaceColor','k','DisplayName','Simulated Data');
+            if plotFlag
+                plot(det_kHz, fit_curve,'r-', 'LineWidth', 2, 'DisplayName','Fit Curve');
+            end
+            xlabel('Δ/2π [kHz]'); ylabel('Asymmetry');
+            legend('show','FontSize', 18);
+            set(gca,'FontName','Times New Roman','FontSize',15);
+            grid off; box on;legend boxoff;
+        end
+
+        function plotField(cfg,profile)
+            t = cfg.tspan;
+            E_tot = profile.E_total(t);
+            figure('Position', [100, 100, 600, 300]); hold on;
+            plot(t*1e6, 30 * profile.Rabi(t)/(cfg.E0_L2 * cfg.d13 / 2), 'r-', 'LineWidth',1.5);
+            plot(t*1e6, E_tot, 'k-', 'LineWidth',1.5);
+            xlabel('Time [\mus]'); ylabel('E(t)');
+            ylim([-50, 50]);
+            set(gca, 'FontName', 'Times New Roman', 'FontSize', 15);
+            grid off; box on;
+        end
+
+        function plotXvsEnr(X, E_nr_vals, detuning_multipliers, yLabel)
+            nDet = numel(detuning_multipliers);
+            data_labels = {'$\delta_{L2} = -3$ MHz', '$\delta_{L2} = -2$ MHz', ...
+               '$\delta_{L2} = -1$ MHz', '$\delta_{L2} = 0$ MHz', ...
+               '$\delta_{L2} = +1$ MHz', '$\delta_{L2} = +2$ MHz', ...
+               '$\delta_{L2} = +3$ MHz'};
+
+            E_vals = E_nr_vals * 10;
+            cmap = jet(nDet);
+            figure; hold on;
+            for i = 1:nDet
+                plot(E_vals, X(i,:), 'o', 'Color', cmap(i,:), ...
+                     'MarkerFaceColor', cmap(i,:), 'LineWidth',1.5);
+                p = polyfit(E_vals, X(i,:), 1);
+                E_fit = linspace(min(E_vals), max(E_vals), 100);
+                W_fit = polyval(p, E_fit);
+                plot(E_fit, W_fit, '--', 'Color', cmap(i,:), 'LineWidth',1.5, 'HandleVisibility','off');
+            end
+            xlabel('E_{nr0} [mV/cm]');
+            ylabel(yLabel);
+            legend(data_labels, 'Interpreter', 'latex', 'Location', 'eastoutside');
+            grid on;
+            set(gca,'FontName','Times New Roman','FontSize',15);
+            set(gcf,'Units','centimeters','Position',[5,5,25,8]);
+        end
+
+        function [W_table, a0_table, a1_table] = create_Detuning_strength_scan_Tables(...
+        W_mat, a0_mat, a1_mat, detuning_L2_multipliers, E0_nr_values)
+            rowNames = compose('%+dMHz', detuning_L2_multipliers);
+            varNames = compose('%+dV/m', E0_nr_values);
+        
+            W_table  = array2table(W_mat,  'RowNames',rowNames,'VariableNames',varNames);
+            a0_table = array2table(a0_mat, 'RowNames',rowNames,'VariableNames',varNames);
+            a1_table = array2table(a1_mat, 'RowNames',rowNames,'VariableNames',varNames);
+        
+            disp('W/2π [Hz]'); disp(W_table);
+            disp('a0');        disp(a0_table);
+            disp('a1 [1/H   z]');disp(a1_table);
+        end 
+
+        function plotPositionMap(dataMat, nr_pos, L2_pos, speed, unit)
+            if nargin<4 || isempty(speed), speed = 616; end
+            if nargin<5 || isempty(unit),  unit  = 'time'; end
+        
+            switch lower(unit)
+              case 'time'
+                xVals = nr_pos;           xLabel = 'NR position [\mus]';
+                yVals = L2_pos;           yLabel = 'L2 position [\mus]';
+              case 'distance'
+                xVals = nr_pos*1e-6*speed*1e3;  xLabel = 'NR position [mm]';
+                yVals = L2_pos*1e-6*speed*1e3;  yLabel = 'L2 position [mm]';
+              otherwise
+                error('Unit must be ''time'' or ''distance''.');
+            end
+        
+            % Interpolate onto a fine grid for smoothness
+            xi = linspace(min(xVals), max(xVals), length()*10);
+            yi = linspace(min(yVals), max(yVals), (max(yVals)-min(yVals))*10);
+            [Xq,Yq] = meshgrid(xi, yi);
+        
+            % dataMat is nnr×nL2, so transpose for griddedInterpolant
+            F = griddedInterpolant({xVals, yVals}, dataMat.', 'cubic', 'none');
+            Zq = F(Xq, Yq);
+        
+            % Plot
+            figure;
+            imagesc(xi, yi, Zq);
+            set(gca, 'YDir','normal');
+            colormap jet;
+            colorbar;
+            xlabel(xLabel);
+            ylabel(yLabel);
+            title('Parameter Map');
+            set(gca, 'FontName','Times New Roman', 'FontSize', 15);
+        end
+    end
+end

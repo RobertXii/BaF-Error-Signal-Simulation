@@ -416,7 +416,7 @@ grid off;
 % Given constants
 E0 = 40;                        % Stark Field Strength [V/m]
 E_nr0_values = [-12, -9, -6, -3, 0, 3, 6, 9, 12];  % NR Field Strength values [V/m]
-E_L2 = 1204.1 * 0.09;            % L2 Field Strength [V/m]
+E_L2 = 1204.1 * 0.1;            % L2 Field Strength [V/m]
 d12 = -33.6 * 2*pi;             % Dipole matrix element d_{12} [rad/(s·V/m)]
 d13 = -2.15e4 * 2*pi;           % Dipole matrix element d_{13} [rad/(s·V/m)]
 Gamma = 2.7e6 * 2*pi;           % Decay rate [rad/s]
