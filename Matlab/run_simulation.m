@@ -19,8 +19,8 @@
 %% Define Scan Parameters
 % Modify these arrays to change the scan range for the L2 detuning multiplier
 % and the non-reversing field amplitude (E0_nr).
-detuning_L2_multipliers = -3:1:3;          % L2 detuning multpliers [MHz]
-E0_nr_values = -12:24:12;                  % Non-reversing field amplitudes [V/m]
+detuning_L2_multipliers = 3:1:3;          % L2 detuning multpliers [MHz]
+E0_nr_values = 12:24:12;                  % Non-reversing field amplitudes [V/m]
 % E0_nr_values = 12;                   % Non-reversing field amplitudes [V/m]
 
 % Determine the number of scan points for each parameter
@@ -98,10 +98,10 @@ disp(a1_table);
 % sim.plotPopulationEvolution(1, 'Schrodinger', 'yes');
 
 %% Plot E field
-sim.plotElectricField();
+% sim.plotElectricField();
 
 %% Output analytic result
-sim.analyticSol(3);
+% sim.analyticSol(3);
 
 %% plot the asymmetry vs. detuning curve:
 sim.plotAsymmetry();

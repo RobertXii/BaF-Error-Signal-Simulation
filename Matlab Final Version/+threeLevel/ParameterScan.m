@@ -10,7 +10,7 @@ classdef ParameterScan
             obj.solver = sol;
             obj.cfg = cfg;
         end
-        
+
         function res = run(obj)
             N = numel(obj.cfg.detuning_range);
             asym = zeros(1,N);
@@ -63,7 +63,7 @@ classdef ParameterScan
             a0_mat_pos = zeros(nnr, nL2);
             a1_mat_pos = zeros(nnr, nL2);
 
-            cfg.detuning_L2 = 2*pi*1e6 * -3;
+            cfg.detuning_L2 = 2*pi*1e6 * 3;
             cfg.E0_nr = 12;
 
             for i = 1:nnr

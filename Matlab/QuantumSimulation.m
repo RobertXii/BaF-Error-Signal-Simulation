@@ -51,7 +51,7 @@ classdef QuantumSimulation
         tspan = linspace(-51.1e-6, 250e-6, 10000);  % Simulation time span (-51.1e-6, 400e-6, 10000)[s]
         
         % Detuning Scan Parameters
-        detuning_range = linspace(-4000, 4000, 100) * 2 * pi; % Detuning values for |b> [rad/s]
+        detuning_range = linspace(-4000, 4000, 8) * 2 * pi; % Detuning values for |b> [rad/s]
         
         %% Simulation Results Storage
         initialState      % Vectorized initial density matrix (state |a>)
@@ -471,22 +471,21 @@ classdef QuantumSimulation
             % Loop over each detuning value to compute the asymmetry
             for j = 1:N_det
                 Delta_local = obj.detuning_range(j);
-                % asymmetry_arr(j) = (-2 * K1 * K4 * obj.E0_nr * sin(Delta_local * phi) * exp( - (Delta_local)^2/(4*a) ) * ...
-                %     exp( (K3 * obj.gamma_c/2) / ( obj.detuning_L2^2 + (obj.gamma_c/2)^2 ) ) * ...
-                %     sin( Delta_local * ( T - phi ) - (K3 * obj.detuning_L2) / ( obj.detuning_L2^2 + (obj.gamma_c/2)^2 ))) / ...
-                %     (K1^2 * ( sin(Delta_local * phi) )^2 + obj.E0_nr^2 * K4^2 * exp( - (Delta_local)^2/(2*a) ) * ...
-                %     exp( (K3 * obj.gamma_c) / ( obj.detuning_L2^2 + (obj.gamma_c/2)^2 ) ) );
-                
+                asymmetry_arr(j) = (-2 * K1 * K4 * obj.E0_nr * sin(Delta_local * phi) * exp( - (Delta_local)^2/(4*a) ) * ...
+                    exp( (K3 * obj.gamma_c/2) / ( obj.detuning_L2^2 + (obj.gamma_c/2)^2 ) ) * ...
+                    sin( Delta_local * ( T - phi ) - (K3 * obj.detuning_L2) / ( obj.detuning_L2^2 + (obj.gamma_c/2)^2 ))) / ...
+                    (K1^2 * ( sin(Delta_local * phi) )^2 + obj.E0_nr^2 * K4^2 * exp( - (Delta_local)^2/(2*a) ) * ...
+                    exp( (K3 * obj.gamma_c) / ( obj.detuning_L2^2 + (obj.gamma_c/2)^2 ) ) );
                 % approximated form
-                gamma = -2 * K4 * obj.E0_nr * exp( (K3 * obj.gamma_c/2) / ( obj.detuning_L2^2 + (obj.gamma_c/2)^2 ) )/ K1 ;
-                beta = (K3 * obj.detuning_L2) / ( obj.detuning_L2^2 + (obj.gamma_c/2)^2 );
+                % gamma = -2 * K4 * obj.E0_nr * exp( (K3 * obj.gamma_c/2) / ( obj.detuning_L2^2 + (obj.gamma_c/2)^2 ) )/ K1 ;
+                % beta = (K3 * obj.detuning_L2) / ( obj.detuning_L2^2 + (obj.gamma_c/2)^2 );
                 % asymmetry_arr(j) = (gamma * (1 - (Delta_local)^2/(4*a) ) * ...
                 %     sin( Delta_local * ( T - phi ) - beta)) / ...
                 %     sin(Delta_local * phi) ;
                 % asymmetry_arr(j) = -2 * gamma * sin(beta) / ( Delta_local * obj.T_e) + ...
                 %     Delta_local * gamma * ((1/(a * obj.T_e)-obj.T_e/12) + (2*t_diff + obj.T_e + 2 * obj.T_f1)^2 / (4 * obj.T_e)) * sin(beta);
-                asymmetry_arr(j) = (-50*2*pi/Delta_local) .* (obj.omega_stark./(-0.5*obj.d12*obj.E0_stark)) .* ((obj.T_e + obj.T_f2) ./ obj.T_e) + ...
-                    1.1228e-05 * Delta_local;
+                % asymmetry_arr(j) = (-50*2*pi/Delta_local) .* (obj.omega_stark./(-0.5*obj.d12*obj.E0_stark)) .* ((obj.T_e + obj.T_f2) ./ obj.T_e) + ...
+                %     1.1228e-05 * Delta_local;
                 % asymmetry_arr(j) = -(50*2*pi/Delta_local) .* ((obj.omega_stark^2-Delta_local^2)./((-obj.d12*obj.E0_stark*obj.omega_stark))) .* ((sin(Delta_local*(obj.T_e/2+obj.T_f2/2)) ./ sin(Delta_local*obj.T_e/2)).* cos(Delta_local*obj.T_f1/2) ) + 1.1228e-05.*Delta_local;
                 %   asymmetry_arr(j) = (2*50*2*pi./Delta_local) .* ...
                 % ((obj.omega_stark ) / (obj.d12*obj.E0_stark)) .* ...
@@ -494,15 +493,15 @@ classdef QuantumSimulation
                 % cos((Delta_local/2)*(obj.T_f1 - obj.T_f2)) + 1.1228e-05*Delta_local;
             end
             obj.analytic_asymmetry = asymmetry_arr;
-            % disp(obj.analytic_asymmetry);
-            disp((K3 * obj.detuning_L2) / ( obj.detuning_L2^2 + (obj.gamma_c/2)^2 ));
-            disp(-2* K4 * exp( (K3 * obj.gamma_c) / ( obj.detuning_L2^2 + (obj.gamma_c/2)^2 )) * obj.E0_nr / K1);
+            disp(obj.analytic_asymmetry);
+            % disp((K3 * obj.detuning_L2) / ( obj.detuning_L2^2 + (obj.gamma_c/2)^2 ));
+            % disp(-2* K4 * exp( (K3 * obj.gamma_c) / ( obj.detuning_L2^2 + (obj.gamma_c/2)^2 )) * obj.E0_nr / K1);
         end
 
         %% Plot Asymmetry vs. Detuning
         function plotAsymmetry(obj)
             % plotAsymmetry Plot the asymmetry as a function of detuning.
-            % obj.analytic_asymmetry = obj.calculateAnalyticAsymmetry();
+            obj.analytic_asymmetry = obj.calculateAnalyticAsymmetry();
             
             % Convert detuning to kHz
             detuning_kHz = obj.detuning_range / (2*pi*1000);

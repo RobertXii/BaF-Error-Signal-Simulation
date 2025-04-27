@@ -23,6 +23,21 @@ classdef SimConfig
         detuning_L2    % L2 laser detuning [rad/s]
         fieldMethod    % Which total field profile to use
     end
+
+    properties (Dependent)
+        a               % = v^2/(2√2 σ_u^2)
+        phi             % = T_e/2
+        T_before_L2     % = T_e + T_f1 + T_f2
+        K1              % = 2·d12·E0_stark/omega_stark
+        K2              % = d12^2·E0_stark^2/omega_stark^2
+        K3              % = d13^2·E0_L2^2·√π·σ_L2/4
+        K4              % = d12·√(π/a)
+        alpha           % = exp[(K3·(γ_c/2))/(δ_L2^2+(γ_c/2)^2)]
+        beta            % = (K3·δ_L2)/(δ_L2^2+(γ_c/2)^2)
+        T_all           % = T_before_L2 + t_diff
+        T_diff          % = t_nr - t_L2
+    end
+
     methods(Static)
         function cfg = default()
             cfg = SimConfig;
@@ -31,7 +46,7 @@ classdef SimConfig
             cfg.d13          = -2.15e4 * 2*pi;
             cfg.gamma_c      = 2.7e6 * 2*pi;
             cfg.E0_stark     = 40;
-            cfg.E0_nr        = 0;
+            cfg.E0_nr        = 12;
             cfg.E0_L2        = 1204.1;
             cfg.omega_stark  = 2*pi*11.44e3;
             cfg.v            = 616;
@@ -46,6 +61,54 @@ classdef SimConfig
             cfg.detuning_range = linspace(-4000,4000,100) * 2*pi;
             cfg.detuning_L2  = 2*pi*1e6 * 2;
             cfg.fieldMethod  = 'default';
+        end
+    end
+
+    methods
+        function a = get.a(cfg)
+            a = cfg.v^2/(2*sqrt(2)*cfg.sigma_u^2);
+        end
+
+        function phi = get.phi(cfg)
+            phi = cfg.T_e/2;
+        end
+
+        function T_before_L2 = get.T_before_L2(cfg)
+            T_before_L2 = cfg.T_e + cfg.T_f1 + cfg.T_f2;
+        end
+
+        function K1 = get.K1(cfg)
+            K1 = 2*cfg.d12*cfg.E0_stark/cfg.omega_stark;
+        end
+
+        function K2 = get.K2(cfg)
+            K2 = (cfg.d12^2 * cfg.E0_stark^2)/(cfg.omega_stark^2);
+        end
+
+        function K3 = get.K3(cfg)
+            K3 = -(cfg.d13^2 * cfg.E0_L2^2 * sqrt(pi) * cfg.sigma_L2)/4;
+        end
+
+        function K4 = get.K4(cfg)
+            K4 = cfg.d12 * sqrt(pi/cfg.a);
+        end
+
+        function alpha = get.alpha(cfg)
+            alpha = exp((cfg.K3*(cfg.gamma_c/2)) / ...
+                        (cfg.detuning_L2^2 + (cfg.gamma_c/2)^2));
+        end
+
+        function beta = get.beta(cfg)
+            beta = (cfg.K3 * cfg.detuning_L2) / ...
+                   (cfg.detuning_L2^2 + (cfg.gamma_c/2)^2);
+        end
+
+        function T_all = get.T_all(cfg)
+            T_all = cfg.T_e + cfg.T_f1 + cfg.T_f2 + (cfg.t_nr - cfg.t_L2);
+        end
+
+        function T_diff = get.T_diff(cfg)
+            T_diff = cfg.t_nr - cfg.t_L2;
         end
     end
 end
