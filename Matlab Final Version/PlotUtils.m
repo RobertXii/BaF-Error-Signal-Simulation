@@ -108,8 +108,8 @@ classdef PlotUtils
             plot(t*1e6, profile.E_stark(t), 'k:', 'LineWidth',1);
             plot(t*1e6, 30 * profile.Rabi(t)/(cfg.E0_L2 * cfg.d13 / 2), 'r-', 'LineWidth',1.5);
             plot(t*1e6, E_tot, 'k-', 'LineWidth',1.5);
-            xlabel('Time [\mus]'); ylabel('E(t) (arb. unit)');
-            ylim([-50, 50]);
+            xlabel('Time [\mus]'); xlim([-60,210]);
+            ylabel('E(t) (arb. unit)'); ylim([-50, 50]);
             set(gca, 'FontName', 'Times New Roman', 'FontSize', 15);
             grid off; box on;
         end
