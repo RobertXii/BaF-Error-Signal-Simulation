@@ -180,13 +180,14 @@ classdef PlotUtils
                 yVals = L2_pos;       yLabel = 'L2 position [\mus]';
                 cross_x = 70.1;
                 cross_y = 52.6;
-                x_line = (cfg.T_e/2)*1e6;
+                % x_line = (cfg.T_e/2)*1e6;
+                x_line = (148.7);
               case 'distance'
                 xVals = nr_pos*1e-6*cfg.v*1e3;  xLabel = 'NR position [mm]';
                 yVals = L2_pos*1e-6*cfg.v*1e3;  yLabel = 'L2 position [mm]';
                 cross_x = 70.1*cfg.v*1e3;
                 cross_y = 52.6*cfg.v*1e3;
-                x_line = (cfg.T_e/2)*cfg.v*1e3;
+                % x_line = (cfg.T_e/2)*cfg.v*1e3;
               otherwise
                 error('Unit must be ''time'' or ''distance''.');
             end
@@ -201,20 +202,20 @@ classdef PlotUtils
             imagesc(xi, yi, Zq);
             set(gca,'YDir','normal');
             hold on;
-            % yl = ylim;
+            yl = ylim;
             % xl = xlim;
-            % plot([x_line x_line], yl, 'w--', 'LineWidth',1);
+            plot([x_line x_line], yl, 'w--', 'LineWidth',2);
             % plot(xl, [x_line x_line], 'w--', 'LineWidth',1);
             % plot([-x_line -x_line], yl, 'w--', 'LineWidth',1);
             % plot(xl, [-x_line -x_line], 'w--', 'LineWidth',1);
             plot(cross_x, cross_y, 'wx', 'MarkerSize',10, 'LineWidth', 3);
 
-            width_cm = 12;
-            height_cm = width_cm * (numel(yVals)/numel(xVals));
+            width_cm = 30;
+            height_cm = 2 * width_cm * (numel(yVals)/numel(xVals));
             set(gcf,'Units','centimeters','Position',[10,10,width_cm+2,height_cm]);
 
             colormap jet; 
-            colorbar; clim([0 60]);
+            colorbar; clim([-65 65]);
             xlabel(xLabel);
             ylabel(yLabel);
             set(gca,'FontName','Times New Roman','FontSize',15, 'TickDir','out');

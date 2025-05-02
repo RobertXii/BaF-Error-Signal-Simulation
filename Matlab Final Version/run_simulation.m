@@ -2,8 +2,8 @@
 % Main script
 detuning_L2_multipliers = -3:1:3;   % L2 detuning multipliers [MHz]
 E0_nr_values           = -12:3:12; % Non-reversing field amplitudes [V/m]
-nr_pos = 40:10:150;                
-L2_pos = 40:10:150;
+nr_pos = 50:10:600;                
+L2_pos = 50:10:100;
 
 cfg = SimConfig.default();
 cfg.E0_L2 = 1204.1*0.09;
@@ -11,9 +11,9 @@ cfg.E0_nr = 12;
 cfg.t_nr = 120.1e-6; % 70.1e-6
 cfg.t_L2 = 102.6e-6; % 52.6e-6
 cfg.detuning_L2 = 2*pi*1e6 * 3; 
-cfg.tspan = linspace(-51.1e-6,200e-6,10000);
-cfg.detuning_range = linspace(-4000, 4000, 100) * 2*pi;
-cfg.fieldMethod = 'after';  % 'before', 'after','modified','default'
+cfg.tspan = linspace(-51.1e-6,700e-6,10000);
+cfg.detuning_range = linspace(-4000, 4000, 80) * 2*pi;
+cfg.fieldMethod = 'default';  % 'before', 'after','modified','default'
 
 % profile = threeLevel.FieldProfile(cfg);
 % solver  = threeLevel.SchrodingerSolver(cfg, profile);
@@ -28,17 +28,17 @@ cfg.fieldMethod = 'after';  % 'before', 'after','modified','default'
 %     detuning_L2_multipliers, E0_nr_values, cfg, @threeLevel.SchrodingerSolver);
     
 % L2 and Enr position scan
-% [W_p, a0_p, a1_p] = threeLevel.ParameterScan.scan_L2_Enr_position(...
-%     nr_pos, L2_pos, cfg, @threeLevel.SchrodingerSolver);
+[W_p, a0_p, a1_p] = threeLevel.ParameterScan.scan_L2_Enr_position(...
+    nr_pos, L2_pos, cfg, @threeLevel.SchrodingerSolver);
 %%
 % PlotUtils.plotAsymmetry(cfg, results.detuning, results.asymmetry, params, false);
-profile = threeLevel.FieldProfile(cfg);
-PlotUtils.plotField(cfg, profile);
+% profile = threeLevel.FieldProfile(cfg);
+% PlotUtils.plotField(cfg, profile);
 
 % [W_tab_pos,a0_tab_pos,a1_tab_pos] = PlotUtils.createPositionScanTables(...
 %     W_p, a0_p, a1_p, nr_pos, L2_pos);
 % 
-% PlotUtils.plotPositionMap(cfg, W_p, nr_pos, L2_pos, 'time');
+PlotUtils.plotPositionMap(cfg, W_p, nr_pos, L2_pos, 'time');
 
 % Plot Simuation result for W, a0, a1
 % [W_tab,a0_tab,a1_tab] = PlotUtils.create_Detuning_strength_scan_Tables(...
