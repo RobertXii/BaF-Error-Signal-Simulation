@@ -1,7 +1,7 @@
 % Parameters
 W = 5 * 2 * pi;             % Coupling strength (Hz)
-E0 = 0.1;                   % Electric field strength (V/cm)
-omega = 2 * pi * 11.4e3;    % Driving frequency of the electric field (Hz)
+E0 = 0.04;                   % Electric field strength (V/cm)
+omega = 1 * 2 * pi * 11.4e3;    % Driving frequency of the electric field (Hz)
 d = -3360 * 2 * pi;         % Dipolar matrix element (Hz/(V/cm))
 tspan = [0, 87.4e-6];       % Time span for the simulation (s)
 rho0 = [1, 0, 0, 0];        % Initial conditions of the density matrix: [rho_11, rho_12_real, rho_12_imag, rho_22]
@@ -10,6 +10,8 @@ rho0 = [1, 0, 0, 0];        % Initial conditions of the density matrix: [rho_11,
 detuning_range = linspace(-4000, 4000, 1000) * 2 * pi; % Convert from Hz to angular frequency (rad/s)
 asymmetry = zeros(size(detuning_range)); % Initialize asymmetry array
 asymmetry_TDPT = zeros(size(detuning_range)); % Initialize asymmetry TDPT array
+c_plus_squared_plus = zeros(size(detuning_range));
+c_plus_squared_minus = zeros(size(detuning_range));
 
 % Define the Bloch Optical Equation as ODE
 dynamics = @(t, rho, E_field, Delta) [
@@ -57,20 +59,22 @@ for i = 1:length(detuning_range)
     % % interaction_term_plus = 2 * (W / Delta) * (d * E0 / omega) + (d * E0 / omega)^2; % Interaction term (1.52)
     % interaction_term_plus = 2 * (W / Delta) * (d * E0 /sqrt(omega^2 - Delta^2)) + (d * E0 /sqrt(omega^2 - Delta^2))^2; % Interaction term (1.99)
     % c_plus_squared_plus = 4 * sin_term_plus * interaction_term_plus; % Probability |c_+(t)|^2
+    t = tspan(2);
+    omega = 3 * 2 * pi * 11.4e3;
     first_term = 2 * W ./ Delta .* sin(Delta * t/2) .* exp(-1i * Delta * t/2);
     prop = -1i * d * E0 .* exp(-1i * Delta * t)./ (omega.^2 - Delta.^2);
 
     c_plus = first_term + prop .* (omega .* exp(1i * Delta * t) - 1i * Delta.* sin(omega * t) - omega .* cos(omega * t));
     c_minus = first_term - prop .* (omega .* exp(1i * Delta * t) - 1i * Delta.* sin(omega * t) - omega .* cos(omega * t));
-    c_plus_squared_plus = abs(c_plus).^2;
-    c_plus_squared_minus = abs(c_minus).^2;
+    c_plus_squared_plus(i) = abs(c_plus).^2;
+    c_plus_squared_minus(i) = abs(c_minus).^2;
 
     %reverse the field
     % sin_term_minus = sin(Delta * tspan(2) / 2).^2; % Sinusoidal term
     % % interaction_term_minus = 2 * (W / Delta) * (d * -E0 / omega) + (d * -E0 / omega)^2; % Interaction term (1.52)
     % interaction_term_minus = 2 * (W / Delta) * (d * -E0 / sqrt(omega^2 - Delta^2)) + (d * -E0 / sqrt(omega^2 - Delta^2))^2; % Interaction term (1.99)
     % c_plus_squared_minus = 4 * sin_term_minus * interaction_term_minus; % Probability |c_+(t)|^2
-    asymmetry_TDPT(i) = (c_plus_squared_plus(end) - c_plus_squared_minus(end)) / (c_plus_squared_plus(end) + c_plus_squared_minus(end));
+    asymmetry_TDPT(i) = (c_plus_squared_plus(i) - c_plus_squared_minus(i)) / (c_plus_squared_plus(i) + c_plus_squared_minus(i));
 end
 
 % Convert detuning to Hz for the plot
@@ -80,11 +84,23 @@ detuning_Hz = detuning_range / (2 * pi);
 figure;
 plot(detuning_Hz/1000, asymmetry_TDPT, 'LineWidth', 2, 'Color', 'r');
 hold on;
-plot(detuning_Hz/1000, asymmetry, 'LineWidth', 2, 'Color','k');
+plot(detuning_Hz/1000, asymmetry, 'LineWidth', 2, 'Color','k','LineStyle', ':');
 xlabel('\Delta / 2\pi [kHz]');
 ylabel('Asymmetry (A)');
 title('Detuning vs. Asymmetry');
 lgd = legend('TDPT','Analytic','Location', 'best'); 
+set(lgd, 'Box', 'off','Color', 'none','FontName', 'Times New Roman','FontSize', 20); 
+set(gca, 'FontName', 'Times New Roman','FontSize', 15);
+grid on;
+hold off;
+
+figure;
+plot(detuning_Hz/1000, c_plus_squared_plus, 'LineWidth', 2, 'Color', 'r');
+hold on;
+plot(detuning_Hz/1000, c_plus_squared_minus, 'LineWidth', 2, 'Color','k','LineStyle', ':');
+xlabel('\Delta / 2\pi [kHz]');
+ylabel('population');
+lgd = legend('c+','c-','Location', 'best'); 
 set(lgd, 'Box', 'off','Color', 'none','FontName', 'Times New Roman','FontSize', 20); 
 set(gca, 'FontName', 'Times New Roman','FontSize', 15);
 grid on;

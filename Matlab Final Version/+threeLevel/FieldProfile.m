@@ -35,6 +35,21 @@ classdef FieldProfile
             E = mask .* flatVal + (1 - mask) .* obj.E_nr(t);
         end
 
+        function E = E_stark_dcflip(obj, t)
+            % Flat DC Stark field that flips sign at t=0 within [-T, T]
+            T = 43.7e-6;
+            negMask = (t > -T) & (t <= 0);   % -T < t <= 0  -> +E0
+            posMask = (t >= 0) & (t <= T);   %  0 <= t <= T -> -E0
+            E = obj.cfg.E0_stark * negMask + obj.cfg.E0_stark * posMask;
+        end
+
+        function E = E_stark_linear(obj, t)
+            T = 43.6e-6;
+            mask = abs(t) <= T;  % inside window
+            slope = obj.cfg.E0_stark / T;
+            E = slope .* t .* mask;
+        end
+
         function E = E_total(obj, t)
             switch obj.cfg.fieldMethod
                 case 'default'
@@ -45,11 +60,15 @@ classdef FieldProfile
                     E = obj.E_stark(t) + obj.E_nr_afterL2(t);
                 case 'modified'
                     E = obj.E_stark(t) + obj.E_nr_modified(t);
+                case 'dcflip'
+                    E = obj.E_stark_dcflip(t) + obj.E_nr(t);
+                case 'linear'
+                    E = obj.E_stark_linear(t) + obj.E_nr(t);
                 otherwise
                     error('Unknown fieldMethod: %s', obj.cfg.fieldMethod);
             end
         end
-
+    
         function E = E_total_reversed(obj, t)
             switch obj.cfg.fieldMethod
                 case 'default'
@@ -60,6 +79,10 @@ classdef FieldProfile
                     E = - obj.E_stark(t) + obj.E_nr_afterL2(t);
                 case 'modified'
                     E = - obj.E_stark(t) + obj.E_nr_modified(t);
+                case 'dcflip' 
+                    E = - obj.E_stark_dcflip(t) + obj.E_nr(t);
+                case 'linear'
+                    E = -obj.E_stark_linear(t) + obj.E_nr(t);
                 otherwise
                     error('Unknown fieldMethod: %s', obj.cfg.fieldMethod);
             end

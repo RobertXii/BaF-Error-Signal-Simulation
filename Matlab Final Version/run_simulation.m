@@ -6,39 +6,43 @@ nr_pos = 50:10:600;
 L2_pos = 50:10:100;
 
 cfg = SimConfig.default();
-cfg.E0_L2 = 1204.1*0.09;
-cfg.E0_nr = 12;
+cfg.E0_L2 = 1204.1*0.00;
+cfg.omega_stark  = 2*pi*11.44e3;
+cfg.W = 5 * 2 * pi;
+cfg.E0_stark = 40; % V/m
+cfg.E0_nr = 12*0;
 cfg.t_nr = 120.1e-6; % 70.1e-6
 cfg.t_L2 = 102.6e-6; % 52.6e-6
+% cfg.T_f2 = 0;
 cfg.detuning_L2 = 2*pi*1e6 * 3; 
-cfg.tspan = linspace(-51.1e-6,700e-6,10000);
-cfg.detuning_range = linspace(-4000, 4000, 80) * 2*pi;
-cfg.fieldMethod = 'default';  % 'before', 'after','modified','default'
+cfg.tspan = linspace(-51.1e-6, 87.4e-6,1000);
+cfg.detuning_range = linspace(-4000, 4000, 200) * 2*pi;
+cfg.fieldMethod = 'default';  % 'before', 'after','modified','default','dcflip','linear'
 
-% profile = threeLevel.FieldProfile(cfg);
-% solver  = threeLevel.SchrodingerSolver(cfg, profile);
-% scan    = threeLevel.ParameterScan(solver, cfg);
-% results = scan.run();
-% 
-% fitter  = threeLevel.AsymmetryFitter(results, cfg);
-% params  = fitter.fit();
+profile = threeLevel.FieldProfile(cfg);
+solver  = threeLevel.SchrodingerSolver(cfg, profile);
+scan    = threeLevel.ParameterScan(solver, cfg);
+results = scan.run();
+
+fitter  = threeLevel.AsymmetryFitter(results, cfg);
+params  = fitter.fit();
 
 % L2 detuning and Enr strength scan
 % [W_mat,a0_mat,a1_mat] = threeLevel.ParameterScan.scan_L2_detune_and_Enr(...
 %     detuning_L2_multipliers, E0_nr_values, cfg, @threeLevel.SchrodingerSolver);
     
 % L2 and Enr position scan
-[W_p, a0_p, a1_p] = threeLevel.ParameterScan.scan_L2_Enr_position(...
-    nr_pos, L2_pos, cfg, @threeLevel.SchrodingerSolver);
+% [W_p, a0_p, a1_p] = threeLevel.ParameterScan.scan_L2_Enr_position(...
+%     nr_pos, L2_pos, cfg, @threeLevel.SchrodingerSolver);
 %%
-% PlotUtils.plotAsymmetry(cfg, results.detuning, results.asymmetry, params, false);
+PlotUtils.plotAsymmetry(cfg, results.detuning, results.asymmetry, params, false);
 % profile = threeLevel.FieldProfile(cfg);
 % PlotUtils.plotField(cfg, profile);
 
 % [W_tab_pos,a0_tab_pos,a1_tab_pos] = PlotUtils.createPositionScanTables(...
 %     W_p, a0_p, a1_p, nr_pos, L2_pos);
 % 
-PlotUtils.plotPositionMap(cfg, W_p, nr_pos, L2_pos, 'time');
+% PlotUtils.plotPositionMap(cfg, W_p, nr_pos, L2_pos, 'time');
 
 % Plot Simuation result for W, a0, a1
 % [W_tab,a0_tab,a1_tab] = PlotUtils.create_Detuning_strength_scan_Tables(...

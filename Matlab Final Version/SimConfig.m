@@ -12,7 +12,7 @@ classdef SimConfig
         omega_stark    % Stark frequency [rad/s]
         v              % Beam velocity [m/s]
         sigma_u        % NR field width [m]
-        t_nr             % NR field center time [s]
+        t_nr           % NR field center time [s]
         T_f1           % Free evolution before Stark [s]
         T_f2           % Free evolution after Stark [s]
         T_e            % Stark interaction duration [s]
